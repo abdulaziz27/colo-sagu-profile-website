@@ -71,3 +71,34 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+
+## Backend (Express + MySQL + Midtrans)
+
+### Setup
+
+1. Buat file `.env` di root project, isi dengan:
+
+```
+MIDTRANS_SERVER_KEY=SB-Mid-server-Z3-Zp_tYja3x2e6t4BYPq_gw
+MIDTRANS_CLIENT_KEY=SB-Mid-client-yTb4hQknvTM4U0qb
+MIDTRANS_MERCHANT_ID=G262060243
+MYSQL_HOST=localhost
+MYSQL_USER=your_mysql_user
+MYSQL_PASSWORD=your_mysql_password
+MYSQL_DATABASE=your_database_name
+```
+
+2. Jalankan perintah berikut untuk install dependency:
+
+```
+npm install
+```
+
+3. Jalankan project (frontend + backend):
+
+```
+npm run dev
+```
+
+- Frontend: http://localhost:8080
+- Backend API: http://localhost:3001 (default, bisa diubah di server/index.js)
