@@ -1,15 +1,19 @@
 import { ArrowRight, Leaf } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroForest from "@/assets/hero-forest.jpg";
+import { Link } from "react-router-dom";
 
 const Hero = () => {
   return (
-    <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <section
+      id="home"
+      className="relative min-h-screen flex items-center justify-center overflow-hidden"
+    >
       {/* Background Image */}
       <div className="absolute inset-0">
-        <img 
-          src={heroForest} 
-          alt="Papua Forest" 
+        <img
+          src={heroForest}
+          alt="Papua Forest"
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-forest/80 via-forest/60 to-transparent"></div>
@@ -21,7 +25,9 @@ const Hero = () => {
           {/* Badge */}
           <div className="inline-flex items-center px-4 py-2 rounded-full bg-sago/20 text-white mb-6 animate-fade-in">
             <Leaf className="w-4 h-4 mr-2" />
-            <span className="text-sm font-medium">Gerakan Ketahanan Pangan Papua</span>
+            <span className="text-sm font-medium">
+              Gerakan Ketahanan Pangan Papua
+            </span>
           </div>
 
           {/* Main Heading */}
@@ -33,25 +39,30 @@ const Hero = () => {
 
           {/* Mission Statement */}
           <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-2xl leading-relaxed animate-fade-in">
-            Colo Sagu mengajak masyarakat Papua membudidayakan dan mengonsumsi sagu serta 
-            kekuatan budaya pangan lokal untuk menciptakan ketahanan pangan berkelanjutan.
+            Colo Sagu mengajak masyarakat Papua membudidayakan dan mengonsumsi
+            sagu serta kekuatan budaya pangan lokal untuk menciptakan ketahanan
+            pangan berkelanjutan.
           </p>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 animate-fade-in">
-            <Button 
-              size="lg" 
+            <Button
+              asChild
+              size="lg"
               className="bg-sago hover:bg-sago/80 text-white font-semibold px-8 py-4 text-lg"
             >
-              Dukung Misi Kami
-              <ArrowRight className="ml-2 h-5 w-5" />
+              <a href="#donate">
+                Dukung Misi Kami
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </a>
             </Button>
-            <Button 
-              variant="outline" 
-              size="lg" 
-              className="border-white text-white hover:bg-white hover:text-forest font-semibold px-8 py-4 text-lg"
+            <Button
+              asChild
+              variant="outline"
+              size="lg"
+              className="border-white text-black hover:bg-white hover:text-forest font-semibold px-8 py-4 text-lg"
             >
-              Pelajari Lebih Lanjut
+              <a href="#about">Pelajari Lebih Lanjut</a>
             </Button>
           </div>
         </div>

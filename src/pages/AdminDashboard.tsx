@@ -19,6 +19,8 @@ import {
   Youtube,
   Target,
   FileText,
+  Leaf,
+  Shield,
 } from "lucide-react";
 import DonasiTable from "./admin/DonasiTable";
 import UsersTable from "./admin/UsersTable";
@@ -44,37 +46,91 @@ export default function AdminDashboard() {
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-gradient-to-b from-background to-secondary/30">
-        <Sidebar className="bg-sidebar-primary text-sidebar-foreground border-r shadow-xl min-h-screen">
-          <SidebarContent>
-            <SidebarGroup>
-              <SidebarGroupLabel className="text-lg font-bold text-sidebar-accent-foreground mb-2 tracking-wide">
-                CMS Admin
-              </SidebarGroupLabel>
-              <SidebarMenu>
-                {menu.map((item) => (
-                  <SidebarMenuItem key={item.key}>
-                    <SidebarMenuButton
-                      isActive={active === item.key}
-                      onClick={() => setActive(item.key)}
-                      className={`w-full justify-start rounded-lg transition-colors px-3 py-2 my-1 font-medium ${
-                        active === item.key
-                          ? "bg-forest text-white shadow-md"
-                          : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                      }`}
-                    >
-                      {item.icon}
-                      <span>{item.label}</span>
-                      {active === item.key && (
-                        <span className="ml-auto bg-white/80 text-forest text-xs px-2 py-0.5 rounded-full">
-                          Aktif
-                        </span>
-                      )}
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroup>
-          </SidebarContent>
+        <Sidebar className="border-0 shadow-2xl shadow-green-900/10 min-h-screen">
+          <div className="h-full bg-gradient-to-b from-green-800 via-emerald-700 to-green-900 relative overflow-hidden">
+            {/* Background decorations */}
+            <div className="absolute inset-0">
+              <div className="absolute top-1/4 -left-8 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl"></div>
+              <div className="absolute bottom-1/4 -right-8 w-40 h-40 bg-green-500/10 rounded-full blur-2xl"></div>
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-teal-500/10 rounded-full blur-2xl animate-pulse"></div>
+            </div>
+
+            <SidebarContent className="relative z-10">
+              <SidebarGroup className="p-6">
+                {/* Header dengan logo */}
+                <div className="mb-8 text-center">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl mb-4 shadow-lg">
+                    <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-xl">
+                      <Leaf className="w-6 h-6 text-white" />
+                    </div>
+                  </div>
+                  <SidebarGroupLabel className="text-xl font-bold text-white mb-1 tracking-wide block">
+                    CMS Admin
+                  </SidebarGroupLabel>
+                  <p className="text-green-100/80 text-sm font-medium">
+                    Dashboard Colo Sagu
+                  </p>
+                </div>
+
+                <SidebarMenu className="space-y-2">
+                  {menu.map((item, index) => (
+                    <SidebarMenuItem key={item.key}>
+                      <SidebarMenuButton
+                        isActive={active === item.key}
+                        onClick={() => setActive(item.key)}
+                        className={`w-full justify-start rounded-xl transition-all duration-300 px-4 py-3 my-1 font-medium group relative overflow-hidden ${
+                          active === item.key
+                            ? "bg-white/20 backdrop-blur-sm text-white shadow-lg border border-white/30"
+                            : "hover:bg-white/10 hover:backdrop-blur-sm text-green-100 hover:text-white hover:shadow-md"
+                        }`}
+                        style={{ animationDelay: `${index * 0.1}s` }}
+                      >
+                        {/* Icon dengan efek glow */}
+                        <div
+                          className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-300 ${
+                            active === item.key
+                              ? "bg-gradient-to-br from-green-400 to-emerald-500 shadow-lg shadow-green-500/30"
+                              : "group-hover:bg-white/20"
+                          }`}
+                        >
+                          {item.icon}
+                        </div>
+
+                        <span className="ml-3 font-semibold">{item.label}</span>
+
+                        {/* Active indicator - SAMA SEPERTI ASLI */}
+                        {active === item.key && (
+                          <span className="ml-auto bg-gradient-to-r from-green-400 to-emerald-400 text-green-900 text-xs px-2 py-1 rounded-full font-bold shadow-sm">
+                            Aktif
+                          </span>
+                        )}
+
+                        {/* Hover effect */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out"></div>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+
+                {/* Footer dengan info */}
+                <div className="mt-auto pt-6 border-t border-white/20">
+                  <div className="flex items-center space-x-3 p-3 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
+                    <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg shadow-lg">
+                      <Shield className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-white font-semibold text-sm">
+                        Admin Panel
+                      </p>
+                      <p className="text-green-100/70 text-xs">
+                        Sistem Terpadu
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </SidebarGroup>
+            </SidebarContent>
+          </div>
         </Sidebar>
         <SidebarInset>
           <div className="w-full max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-4 md:py-8 min-h-screen">
