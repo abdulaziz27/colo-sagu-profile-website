@@ -35,7 +35,7 @@ const Header = () => {
             <img
               src="/lovable-uploads/908c9c8a-4be9-4f88-a48c-d7b22f694a9b.png"
               alt="Colo Sagu Nusantara"
-              className="h-10 w-auto"
+              className="h-16 w-auto"
             />
           </div>
 

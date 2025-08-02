@@ -4,12 +4,24 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import axios from "axios";
 
+// Type definitions
+interface Program {
+  id: number;
+  title: string;
+  description: string;
+  status: string;
+  icon: string;
+  is_active: boolean;
+}
+
 const Programs = () => {
-  const [programsData, setProgramsData] = useState<any[]>([]);
+  const [programsData, setProgramsData] = useState<Program[]>([]);
   const [programsLoading, setProgramsLoading] = useState(true);
 
-  // Icon mapping
-  const iconMap: { [key: string]: any } = {
+  // Icon mapping dengan proper typing
+  const iconMap: {
+    [key: string]: React.ComponentType<{ className?: string }>;
+  } = {
     Sprout,
     BookOpen,
     Users,
@@ -26,7 +38,7 @@ const Programs = () => {
     try {
       const res = await axios.get("/api/programs");
       console.log("Programs data:", res.data);
-      setProgramsData(res.data.filter((p) => p.is_active)); // Only active programs
+      setProgramsData(res.data.filter((p: Program) => p.is_active)); // Only active programs
     } catch (err) {
       console.error("Error fetching programs:", err);
       setProgramsData([]); // Set empty array if error
@@ -122,12 +134,12 @@ const Programs = () => {
                       <p className="text-muted-foreground mb-4">
                         {program.description}
                       </p>
-                      <Button
+                      {/* <Button
                         variant="outline"
                         className="w-full border-forest text-forest hover:bg-forest hover:text-white"
                       >
                         Pelajari Program
-                      </Button>
+                      </Button> */}
                     </CardContent>
                   </Card>
                 );

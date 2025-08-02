@@ -6,27 +6,27 @@ const Footer = () => {
       { name: "Profil Colo Sagu", href: "#about" },
       { name: "Tim Kami", href: "#team" },
       { name: "Visi & Misi", href: "#mission" },
-      { name: "Kolaborasi", href: "#collaboration" }
+      { name: "Kolaborasi", href: "#collaboration" },
     ],
-    "Program": [
+    Program: [
       { name: "Budidaya Sagu", href: "#cultivation" },
       { name: "Edukasi Pangan", href: "#education" },
       { name: "Pemberdayaan", href: "#empowerment" },
-      { name: "Konservasi", href: "#conservation" }
+      { name: "Konservasi", href: "#conservation" },
     ],
-    "Dukungan": [
+    Dukungan: [
       { name: "Cara Donasi", href: "#donate" },
       { name: "Program Volunteer", href: "#volunteer" },
       { name: "Kemitraan", href: "#partnership" },
-      { name: "Sponsorship", href: "#sponsor" }
-    ]
+      { name: "Sponsorship", href: "#sponsor" },
+    ],
   };
 
   const socialLinks = [
     { icon: Facebook, href: "#", label: "Facebook" },
     { icon: Instagram, href: "#", label: "Instagram" },
     { icon: Youtube, href: "#", label: "YouTube" },
-    { icon: Mail, href: "mailto:info@colosagu.org", label: "Email" }
+    { icon: Mail, href: "mailto:info@colosagu.org", label: "Email" },
   ];
 
   return (
@@ -38,14 +38,14 @@ const Footer = () => {
             {/* Brand Section */}
             <div className="lg:col-span-1">
               <div className="flex items-center mb-6">
-                <img 
-                  src="/lovable-uploads/908c9c8a-4be9-4f88-a48c-d7b22f694a9b.png" 
-                  alt="Colo Sagu Nusantara" 
+                <img
+                  src="/lovable-uploads/908c9c8a-4be9-4f88-a48c-d7b22f694a9b.png"
+                  alt="Colo Sagu Nusantara"
                   className="h-12 w-auto filter brightness-0 invert"
                 />
               </div>
               <p className="text-white/80 mb-6 leading-relaxed">
-                Membangun ketahanan pangan Papua yang berkelanjutan melalui 
+                Membangun ketahanan pangan Papua yang berkelanjutan melalui
                 pelestarian budaya pangan lokal dan pemberdayaan masyarakat.
               </p>
               <div className="flex space-x-4">
@@ -65,7 +65,9 @@ const Footer = () => {
             {/* Links Sections */}
             {Object.entries(footerLinks).map(([category, links]) => (
               <div key={category}>
-                <h4 className="text-lg font-semibold mb-6 text-sago">{category}</h4>
+                <h4 className="text-lg font-semibold mb-6 text-sago">
+                  {category}
+                </h4>
                 <ul className="space-y-3">
                   {links.map((link, index) => (
                     <li key={index}>
@@ -84,7 +86,7 @@ const Footer = () => {
         </div>
 
         {/* Newsletter Section */}
-        <div className="border-t border-white/20 py-8">
+        {/* <div className="border-t border-white/20 py-8">
           <div className="grid md:grid-cols-2 gap-6 items-center">
             <div>
               <h4 className="text-xl font-semibold mb-2 flex items-center">
@@ -106,7 +108,7 @@ const Footer = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Bottom Footer */}
         <div className="border-t border-white/20 py-6">
@@ -119,10 +121,16 @@ const Footer = () => {
               © 2024 Colo Sagu Nusantara. Semua hak dilindungi.
             </div>
             <div className="flex items-center space-x-6 text-sm">
-              <a href="#privacy" className="text-white/80 hover:text-white transition-colors">
+              <a
+                href="#privacy"
+                className="text-white/80 hover:text-white transition-colors"
+              >
                 Kebijakan Privasi
               </a>
-              <a href="#terms" className="text-white/80 hover:text-white transition-colors">
+              <a
+                href="#terms"
+                className="text-white/80 hover:text-white transition-colors"
+              >
                 Syarat & Ketentuan
               </a>
             </div>

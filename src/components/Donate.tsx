@@ -34,6 +34,36 @@ import {
   BookOpen,
 } from "lucide-react";
 
+// Type definitions
+interface BlogPost {
+  id: number;
+  title: string;
+  excerpt: string;
+  created_at: string;
+  is_published: boolean;
+}
+
+interface GalleryItem {
+  id: number;
+  title: string;
+  url: string;
+}
+
+interface Video {
+  id: number;
+  title: string;
+  youtube_url: string;
+  thumbnail_url?: string;
+  is_featured: boolean;
+}
+
+interface ActiveEvent {
+  id: number;
+  name: string;
+  start_date: string;
+  end_date: string;
+}
+
 const Donate = () => {
   const donationOptions = [
     {
@@ -61,13 +91,13 @@ const Donate = () => {
   const donateButtonRef = useRef<HTMLButtonElement>(null);
   const [isSnapOpen, setIsSnapOpen] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
-  const [activeEvent, setActiveEvent] = useState(null);
+  const [activeEvent, setActiveEvent] = useState<ActiveEvent | null>(null);
   const [eventLoading, setEventLoading] = useState(true);
-  const [galleryData, setGalleryData] = useState<any[]>([]);
+  const [galleryData, setGalleryData] = useState<GalleryItem[]>([]);
   const [galleryLoading, setGalleryLoading] = useState(true);
-  const [videosData, setVideosData] = useState<any[]>([]);
+  const [videosData, setVideosData] = useState<Video[]>([]);
   const [videosLoading, setVideosLoading] = useState(true);
-  const [blogData, setBlogData] = useState<any[]>([]);
+  const [blogData, setBlogData] = useState<BlogPost[]>([]);
   const [blogLoading, setBlogLoading] = useState(true);
 
   // Fungsi untuk format tanggal
@@ -86,7 +116,10 @@ const Donate = () => {
     try {
       const res = await axios.get(API_ENDPOINTS.TOTAL_DONATIONS);
       setTotalDonation(res.data.total);
-    } catch {}
+    } catch (error) {
+      // Handle error silently
+      console.error("Error fetching total donations:", error);
+    }
   };
 
   // Fungsi untuk fetch data galeri
@@ -109,7 +142,7 @@ const Donate = () => {
     try {
       const res = await axios.get(API_ENDPOINTS.VIDEOS);
       console.log("Videos data:", res.data);
-      setVideosData(res.data.filter((v) => v.is_featured).slice(0, 3)); // Ambil 3 video featured
+      setVideosData(res.data.filter((v: Video) => v.is_featured).slice(0, 3)); // Ambil 3 video featured
     } catch (err) {
       console.error("Error fetching videos:", err);
       setVideosData([]); // Set empty array jika error
@@ -123,7 +156,7 @@ const Donate = () => {
     try {
       const res = await axios.get(API_ENDPOINTS.BLOG_POSTS);
       console.log("Blog data:", res.data);
-      setBlogData(res.data.filter((b) => b.is_published).slice(0, 3)); // Ambil 3 blog published
+      setBlogData(res.data.filter((b: BlogPost) => b.is_published).slice(0, 3)); // Ambil 3 blog published
     } catch (err) {
       console.error("Error fetching blog:", err);
       setBlogData([]); // Set empty array jika error
@@ -138,7 +171,8 @@ const Donate = () => {
       try {
         const res = await axios.get(API_ENDPOINTS.ACTIVE_EVENT);
         setActiveEvent(res.data);
-      } catch {
+      } catch (error) {
+        console.error("Error fetching active event:", error);
         setActiveEvent(null);
       }
       setEventLoading(false);
@@ -166,7 +200,8 @@ const Donate = () => {
       const res = await axios.post(API_ENDPOINTS.DONATE, { name, amount });
       const snapToken = res.data.snapToken;
       console.log("Snap token didapat:", snapToken);
-      // @ts-ignore
+
+      // @ts-expect-error - Midtrans snap is loaded externally
       if (!window.snap) {
         alert("Midtrans Snap belum ter-load. Coba refresh halaman.");
         setLoading(false);
@@ -177,7 +212,8 @@ const Donate = () => {
         block: "center",
       });
       setIsSnapOpen(true);
-      // @ts-ignore
+
+      // @ts-expect-error - Midtrans snap is loaded externally
       window.snap.pay(snapToken, {
         onSuccess: function () {
           setIsSnapOpen(false);
@@ -217,6 +253,7 @@ const Donate = () => {
 
   if (eventLoading)
     return <div className="text-center py-20">Memuat event donasi...</div>;
+
   // Hilangkan pesan besar merah, tetap render UI donasi
   const isEventActive = !!activeEvent;
 
@@ -234,8 +271,8 @@ const Donate = () => {
           <div className="w-24 h-1 bg-sago mx-auto mb-8"></div>
           <div className="text-lg font-semibold text-forest mb-2">
             Event: {activeEvent?.name || "Tidak ada event"} (
-            {formatDate(activeEvent?.start_date)} s/d{" "}
-            {formatDate(activeEvent?.end_date)})
+            {formatDate(activeEvent?.start_date || "")} s/d{" "}
+            {formatDate(activeEvent?.end_date || "")})
           </div>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
             Bersama-sama membangun ketahanan pangan Papua yang berkelanjutan
@@ -381,7 +418,10 @@ const Donate = () => {
                   blogData.map((post, index) => (
                     <Card
                       key={index}
-                      className="hover:shadow-lg transition-all duration-300"
+                      className="hover:shadow-lg transition-all duration-300 cursor-pointer"
+                      onClick={() =>
+                        (window.location.href = `/artikel/${post.id || index}`)
+                      }
                     >
                       <CardContent className="p-4">
                         <h4 className="font-semibold text-foreground mb-2 line-clamp-2">
@@ -409,7 +449,10 @@ const Donate = () => {
                   Array.from({ length: 3 }).map((_, index) => (
                     <Card
                       key={index}
-                      className="hover:shadow-lg transition-all duration-300"
+                      className="hover:shadow-lg transition-all duration-300 cursor-pointer"
+                      onClick={() =>
+                        (window.location.href = `/artikel/${index + 1}`)
+                      }
                     >
                       <CardContent className="p-4">
                         <h4 className="font-semibold text-foreground mb-2 line-clamp-2">
@@ -427,7 +470,7 @@ const Donate = () => {
               <Button
                 variant="outline"
                 className="w-full border-forest text-forest hover:bg-forest hover:text-white"
-                onClick={() => (window.location.href = "/admin?tab=blog")}
+                onClick={() => (window.location.href = "/blog")}
               >
                 Lihat Semua Artikel
                 <ArrowRight className="ml-2 h-4 w-4" />
