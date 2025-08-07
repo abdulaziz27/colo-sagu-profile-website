@@ -7,8 +7,10 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
-import BlogListPage from "./components/BlogListPage"; // ✅ Benar
-import BlogDetailPage from "./components/BlogDetailPage"; // ✅ Diperbaiki
+import BlogListPage from "./components/BlogListPage";
+import BlogDetailPage from "./components/BlogDetailPage";
+import AllPrograms from "./components/AllPrograms";
+import GalleryPage from "./components/GalleryPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./contexts/AuthContext";
 
@@ -25,6 +27,13 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/blog" element={<BlogListPage />} />
             <Route path="/artikel/:id" element={<BlogDetailPage />} />
+
+            {/* Route untuk halaman semua program */}
+            <Route path="/programs" element={<AllPrograms />} />
+
+            {/* Route baru untuk halaman galeri lengkap */}
+            <Route path="/gallery" element={<GalleryPage />} />
+
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route
               path="/admin"
