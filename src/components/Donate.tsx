@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom"; // Tambahkan import ini
 import {
   Card,
   CardContent,
@@ -65,6 +66,8 @@ interface ActiveEvent {
 }
 
 const Donate = () => {
+  const navigate = useNavigate(); // Tambahkan ini
+
   const donationOptions = [
     {
       amount: 100000,
@@ -162,6 +165,11 @@ const Donate = () => {
       setBlogData([]); // Set empty array jika error
     }
     setBlogLoading(false);
+  };
+
+  // Fungsi untuk navigasi ke halaman galeri lengkap
+  const handleViewFullGallery = () => {
+    navigate("/gallery"); // Navigasi ke halaman galeri lengkap
   };
 
   useEffect(() => {
@@ -536,7 +544,7 @@ const Donate = () => {
             <Button
               variant="outline"
               className="w-full border-forest text-forest hover:bg-forest hover:text-white"
-              onClick={() => (window.location.href = "/admin?tab=gallery")}
+              onClick={handleViewFullGallery}
             >
               Lihat Galeri Lengkap
               <ArrowRight className="ml-2 h-4 w-4" />
@@ -620,7 +628,12 @@ const Donate = () => {
             <Button
               variant="outline"
               className="w-full border-forest text-forest hover:bg-forest hover:text-white"
-              onClick={() => (window.location.href = "/admin?tab=videos")}
+              onClick={() =>
+                window.open(
+                  "https://www.youtube.com/@colosaguofficial",
+                  "_blank"
+                )
+              }
             >
               Kelola Video Channel
               <ArrowRight className="ml-2 h-4 w-4" />
