@@ -2,6 +2,7 @@ import { Sprout, BookOpen, Users, TreePine } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 // Type definitions
@@ -17,6 +18,7 @@ interface Program {
 const Programs = () => {
   const [programsData, setProgramsData] = useState<Program[]>([]);
   const [programsLoading, setProgramsLoading] = useState(true);
+  const navigate = useNavigate();
 
   // Icon mapping dengan proper typing
   const iconMap: {
@@ -32,7 +34,7 @@ const Programs = () => {
     Target: BookOpen, // fallback
   };
 
-  // Fetch programs data
+  // Fetch active programs data (initial load)
   const fetchPrograms = async () => {
     setProgramsLoading(true);
     try {
@@ -41,14 +43,14 @@ const Programs = () => {
       setProgramsData(res.data.filter((p: Program) => p.is_active)); // Only active programs
     } catch (err) {
       console.error("Error fetching programs:", err);
-      setProgramsData([]); // Set empty array if error
+      setProgramsData([]);
     }
     setProgramsLoading(false);
   };
 
-  useEffect(() => {
-    fetchPrograms();
-  }, []);
+  const handleViewAllPrograms = () => {
+    navigate("/programs");
+  };
 
   const timeline = [
     {
@@ -71,6 +73,10 @@ const Programs = () => {
     },
   ];
 
+  // Determine which data to display
+  const displayPrograms = programsData;
+  const isLoading = programsLoading;
+
   return (
     <section id="programs" className="py-20 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -87,8 +93,8 @@ const Programs = () => {
         </div>
 
         {/* Programs Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-8 mb-20">
-          {programsLoading
+        <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-8 mb-12">
+          {isLoading
             ? // Loading state
               Array.from({ length: 4 }).map((_, index) => (
                 <Card
@@ -110,13 +116,13 @@ const Programs = () => {
                   </CardContent>
                 </Card>
               ))
-            : programsData.length > 0
+            : displayPrograms.length > 0
             ? // Data programs
-              programsData.map((program, index) => {
+              displayPrograms.map((program, index) => {
                 const IconComponent = iconMap[program.icon] || Sprout;
                 return (
                   <Card
-                    key={index}
+                    key={program.id}
                     className="overflow-hidden group hover:shadow-xl transition-all duration-300"
                   >
                     <div className="aspect-video bg-gradient-to-br from-forest/10 to-sago/10 flex items-center justify-center">
@@ -134,17 +140,11 @@ const Programs = () => {
                       <p className="text-muted-foreground mb-4">
                         {program.description}
                       </p>
-                      {/* <Button
-                        variant="outline"
-                        className="w-full border-forest text-forest hover:bg-forest hover:text-white"
-                      >
-                        Pelajari Program
-                      </Button> */}
                     </CardContent>
                   </Card>
                 );
               })
-            : // Empty state
+            : // Empty state - fallback programs
               Array.from({ length: 4 }).map((_, index) => (
                 <Card
                   key={index}
@@ -167,15 +167,19 @@ const Programs = () => {
                     <p className="text-muted-foreground mb-4">
                       Deskripsi program akan ditampilkan di sini
                     </p>
-                    <Button
-                      variant="outline"
-                      className="w-full border-forest text-forest hover:bg-forest hover:text-white"
-                    >
-                      Pelajari Program
-                    </Button>
                   </CardContent>
                 </Card>
               ))}
+        </div>
+
+        {/* View All Programs Button */}
+        <div className="text-center mb-20">
+          <Button
+            onClick={handleViewAllPrograms}
+            className="bg-forest hover:bg-forest/90 text-white px-8 py-3 text-lg font-medium rounded-full transition-all duration-300 transform hover:scale-105"
+          >
+            Lihat Semua Program
+          </Button>
         </div>
 
         {/* Timeline Section */}
