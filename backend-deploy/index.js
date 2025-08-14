@@ -23,6 +23,8 @@ const corsOptions = {
       "http://localhost:8080",
       "http://localhost:3000",
       "http://localhost:3001",
+      "http://31.97.187.17",
+      "https://31.97.187.17",
       "https://your-domain.com", // Ganti dengan domain Niagahoster Anda
       "https://www.your-domain.com",
     ];
@@ -40,7 +42,7 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 // Static file serving for frontend build
-app.use(express.static(path.join(process.cwd(), "dist")));
+// app.use(express.static(path.join(process.cwd(), "dist")));
 
 // Static file serving for gallery images
 app.use("/gallery", express.static(path.join(process.cwd(), "public/gallery")));
@@ -647,9 +649,9 @@ app.delete("/api/blog-posts/:id", async (req, res) => {
 });
 
 // Serve React app for all other routes
-app.get("*", (req, res) => {
-  res.sendFile(path.join(process.cwd(), "dist", "index.html"));
-});
+// app.get("*", (req, res) => {
+//   res.sendFile(path.join(process.cwd(), "dist", "index.html"));
+// });
 
 app.listen(PORT, () => {
   console.log(`Backend server running on http://localhost:${PORT}`);
