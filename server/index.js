@@ -23,8 +23,12 @@ const corsOptions = {
       "http://localhost:8080",
       "http://localhost:3000",
       "http://localhost:3001",
-      "https://your-domain.com", // Ganti dengan domain Niagahoster Anda
-      "https://www.your-domain.com",
+      "http://31.97.187.17",
+      "https://31.97.187.17",
+      "https://colosagu.id", // ← Root domain
+      "https://www.colosagu.id", // ← Root domain
+      "http://colosagu.id", // ← Root domain
+      "http://www.colosagu.id", // ← Root domain
     ];
 
     if (allowedOrigins.indexOf(origin) !== -1) {
