@@ -183,51 +183,36 @@ const Programs = () => {
         </div>
 
         {/* Timeline Section */}
-        <div className="bg-gradient-to-r from-forest/5 to-sago/5 rounded-3xl p-8 md:p-12">
-          <h3 className="text-3xl font-bold text-center mb-12 text-foreground">
+        <div className="bg-gradient-to-r from-forest/5 to-sago/5 rounded-3xl p-6 md:p-8 lg:p-12">
+          <h3 className="text-2xl md:text-3xl font-bold text-center mb-8 md:mb-12 text-foreground">
             Timeline <span className="text-forest">Colo Sagu</span>
           </h3>
 
-          <div className="relative">
-            {/* Timeline Line */}
-            <div className="absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-forest/20"></div>
-
-            {/* Timeline Items */}
-            <div className="space-y-12">
-              {timeline.map((item, index) => (
-                <div
-                  key={index}
-                  className={`flex items-center ${
-                    index % 2 === 0 ? "flex-row" : "flex-row-reverse"
-                  }`}
-                >
-                  <div
-                    className={`w-1/2 ${
-                      index % 2 === 0 ? "pr-8 text-right" : "pl-8 text-left"
-                    }`}
-                  >
-                    <Card className="bg-white shadow-lg">
-                      <CardContent className="p-6">
-                        <div className="text-2xl font-bold text-forest mb-2">
-                          {item.year}
-                        </div>
-                        <h4 className="text-xl font-semibold text-foreground mb-3">
-                          {item.title}
-                        </h4>
-                        <p className="text-muted-foreground">
-                          {item.description}
-                        </p>
-                      </CardContent>
-                    </Card>
+          {/* Timeline Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+            {timeline.map((item, index) => (
+              <Card
+                key={index}
+                className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 text-center group"
+              >
+                <CardContent className="p-6">
+                  {/* Icon Circle */}
+                  <div className="w-20 h-20 bg-forest/10 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-forest/20 transition-colors duration-300">
+                    <span className="text-2xl font-bold text-forest">
+                      {item.year}
+                    </span>
                   </div>
 
-                  {/* Timeline Dot */}
-                  <div className="relative z-10 w-6 h-6 bg-forest rounded-full border-4 border-white shadow-lg"></div>
-
-                  <div className="w-1/2"></div>
-                </div>
-              ))}
-            </div>
+                  {/* Content */}
+                  <h4 className="text-lg md:text-xl font-semibold text-foreground mb-3">
+                    {item.title}
+                  </h4>
+                  <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+                    {item.description}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </div>
