@@ -28,10 +28,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Edit, Trash2, Plus, Eye } from "lucide-react";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
+import { Editor } from "@/components/blocks/editor-00/editor";
+import { SerializedEditorState } from "lexical";
 import axios from "axios";
 import { toast } from "sonner";
+import "@/components/editor/shadcn-editor.css";
 
 interface BlogPost {
   id: number;
@@ -42,6 +43,36 @@ interface BlogPost {
   is_published: boolean;
   created_at: string;
 }
+
+const initialEditorValue = {
+  root: {
+    children: [
+      {
+        children: [
+          {
+            detail: 0,
+            format: 0,
+            mode: "normal",
+            style: "",
+            text: "",
+            type: "text",
+            version: 1,
+          },
+        ],
+        direction: "ltr",
+        format: "",
+        indent: 0,
+        type: "paragraph",
+        version: 1,
+      },
+    ],
+    direction: "ltr",
+    format: "",
+    indent: 0,
+    type: "root",
+    version: 1,
+  },
+} as unknown as SerializedEditorState;
 
 export default function BlogPostsTable() {
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
@@ -56,34 +87,8 @@ export default function BlogPostsTable() {
     author: "Colo Sagu Team",
     is_published: true,
   });
-
-  // Quill editor configuration
-  const quillModules = {
-    toolbar: [
-      [{ header: [1, 2, 3, false] }],
-      ["bold", "italic", "underline", "strike"],
-      [{ list: "ordered" }, { list: "bullet" }],
-      [{ color: [] }, { background: [] }],
-      [{ align: [] }],
-      ["link", "image"],
-      ["clean"],
-    ],
-  };
-
-  const quillFormats = [
-    "header",
-    "bold",
-    "italic",
-    "underline",
-    "strike",
-    "list",
-    "bullet",
-    "color",
-    "background",
-    "align",
-    "link",
-    "image",
-  ];
+  const [editorState, setEditorState] =
+    useState<SerializedEditorState>(initialEditorValue);
 
   const fetchBlogPosts = async () => {
     setLoading(true);
@@ -104,11 +109,15 @@ export default function BlogPostsTable() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // Convert editor state to HTML string for storage
+      const contentHtml = JSON.stringify(editorState);
+      const submitData = { ...formData, content: contentHtml };
+
       if (editingPost) {
-        await axios.put(`/api/blog-posts/${editingPost.id}`, formData);
+        await axios.put(`/api/blog-posts/${editingPost.id}`, submitData);
         toast.success("Blog post berhasil diperbarui");
       } else {
-        await axios.post("/api/blog-posts", formData);
+        await axios.post("/api/blog-posts", submitData);
         toast.success("Blog post berhasil ditambahkan");
       }
       setIsDialogOpen(false);
@@ -142,6 +151,15 @@ export default function BlogPostsTable() {
       author: post.author,
       is_published: post.is_published,
     });
+
+    // Parse content back to editor state
+    try {
+      const parsedContent = JSON.parse(post.content || "{}");
+      setEditorState(parsedContent);
+    } catch {
+      setEditorState(initialEditorValue);
+    }
+
     setIsDialogOpen(true);
   };
 
@@ -153,6 +171,7 @@ export default function BlogPostsTable() {
       author: "Colo Sagu Team",
       is_published: true,
     });
+    setEditorState(initialEditorValue);
   };
 
   const openDialog = () => {
@@ -264,7 +283,10 @@ export default function BlogPostsTable() {
               Tambah Artikel
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent
+            className="max-w-4xl max-h-[90vh] overflow-y-auto"
+            style={{ zIndex: 50 }}
+          >
             <DialogHeader>
               <DialogTitle>
                 {editingPost ? "Edit Artikel" : "Tambah Artikel Baru"}
@@ -299,17 +321,19 @@ export default function BlogPostsTable() {
 
               <div>
                 <Label htmlFor="content">Konten Artikel</Label>
-                <div className="border rounded-md">
-                  <ReactQuill
-                    theme="snow"
-                    modules={quillModules}
-                    formats={quillFormats}
-                    value={formData.content}
-                    onChange={(content) =>
-                      setFormData({ ...formData, content: content })
-                    }
-                    style={{ height: "200px" }}
-                  />
+                <div className="mt-2">
+                  <div className="lexical-editor">
+                    <Editor
+                      editorSerializedState={editorState}
+                      onSerializedChange={(value) => {
+                        setEditorState(value);
+                        setFormData({
+                          ...formData,
+                          content: JSON.stringify(value),
+                        });
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
 

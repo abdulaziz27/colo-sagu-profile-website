@@ -68,7 +68,6 @@ export default function DonasiTable() {
 
   const columns = useMemo<ColumnDef<any, any>[]>(
     () => [
-      { accessorKey: "order_id", header: "Order ID" },
       { accessorKey: "name", header: "Nama" },
       {
         accessorKey: "amount",
@@ -111,11 +110,27 @@ export default function DonasiTable() {
           );
         },
       },
-      { accessorKey: "event_id", header: "Event" },
+      {
+        accessorKey: "event_name",
+        header: "Event",
+        cell: (info) => {
+          const eventName = info.getValue();
+          return eventName || "Event Umum";
+        },
+      },
       {
         accessorKey: "created_at",
         header: "Tanggal",
-        cell: (info) => String(info.getValue()).slice(0, 19).replace("T", " "),
+        cell: (info) => {
+          const date = new Date(info.getValue());
+          return date.toLocaleDateString("id-ID", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        },
       },
     ],
     []

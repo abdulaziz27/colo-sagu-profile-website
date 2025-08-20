@@ -1,0 +1,145 @@
+/* Shadcn Editor Custom Styles */
+
+/* Editor container */
+.lexical-editor {
+  min-height: 400px;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+/* Toolbar styles */
+.lexical-toolbar {
+  border-bottom: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Content editable area */
+.lexical-content {
+  min-height: 350px;
+  padding: 1rem;
+  font-size: 16px;
+  line-height: 1.6;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+}
+
+.lexical-content:focus {
+  outline: none;
+}
+
+/* Placeholder text */
+.lexical-content .editor-placeholder {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+/* Text formatting */
+.lexical-content strong {
+  font-weight: 600;
+}
+
+.lexical-content em {
+  font-style: italic;
+}
+
+.lexical-content u {
+  text-decoration: underline;
+}
+
+.lexical-content s {
+  text-decoration: line-through;
+}
+
+/* Headings */
+.lexical-content h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 1.5rem 0 0.5rem 0;
+  line-height: 1.2;
+}
+
+.lexical-content h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 1.25rem 0 0.5rem 0;
+  line-height: 1.3;
+}
+
+.lexical-content h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 1rem 0 0.5rem 0;
+  line-height: 1.4;
+}
+
+/* Lists */
+.lexical-content ul,
+.lexical-content ol {
+  margin: 1rem 0;
+  padding-left: 2rem;
+}
+
+.lexical-content li {
+  margin: 0.25rem 0;
+}
+
+/* Blockquotes */
+.lexical-content blockquote {
+  border-left: 4px solid #e2e8f0;
+  padding-left: 1rem;
+  margin: 1rem 0;
+  font-style: italic;
+  color: #64748b;
+}
+
+/* Images */
+.lexical-content img {
+  max-width: 100%;
+  height: auto;
+  margin: 1rem 0;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Toolbar buttons */
+.toolbar-button {
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toolbar-button:hover {
+  background-color: #e2e8f0;
+}
+
+.toolbar-button.active {
+  background-color: #3b82f6;
+  color: white;
+}
+
+/* Separator */
+.toolbar-separator {
+  width: 1px;
+  height: 1.5rem;
+  background-color: #e2e8f0;
+  margin: 0 0.25rem;
+}
+
+/* Dropdown styles */
+.toolbar-dropdown {
+  min-width: 120px;
+}
+
+/* Focus styles */
+.lexical-editor:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}

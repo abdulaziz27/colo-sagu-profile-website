@@ -42,11 +42,30 @@ export default function EventsTable() {
     setLoading(false);
   };
 
+  // Fungsi untuk format tanggal
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
   const columns = useMemo<ColumnDef<any, any>[]>(
     () => [
       { accessorKey: "name", header: "Nama Event" },
-      { accessorKey: "start_date", header: "Mulai" },
-      { accessorKey: "end_date", header: "Selesai" },
+      {
+        accessorKey: "start_date",
+        header: "Mulai",
+        cell: ({ row }) => formatDate(row.getValue("start_date")),
+      },
+      {
+        accessorKey: "end_date",
+        header: "Selesai",
+        cell: ({ row }) => formatDate(row.getValue("end_date")),
+      },
       {
         accessorKey: "is_active",
         header: "Aktif",
@@ -54,7 +73,7 @@ export default function EventsTable() {
       },
       {
         id: "actions",
-        header: "",
+        header: "Aksi",
         cell: ({ row }) => (
           <div className="flex gap-2">
             <Button
@@ -97,14 +116,19 @@ export default function EventsTable() {
   function handleDelete(row: any) {
     if (!confirm(`Hapus event "${row.name}"?`)) return;
     setLoading(true);
+
+    // Periksa apakah event memiliki donasi terkait
     axios
       .delete(`/api/events/${row.id}`)
       .then(() => {
         fetchData();
+        alert("Event berhasil dihapus");
       })
       .catch((err) => {
         console.error("Error deleting event:", err);
-        alert("Gagal menghapus event");
+        alert(
+          "Gagal menghapus event: " + (err.response?.data?.error || err.message)
+        );
       })
       .finally(() => setLoading(false));
   }

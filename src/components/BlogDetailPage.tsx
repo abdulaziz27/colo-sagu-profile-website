@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Calendar, User, Share2, BookOpen } from "lucide-react";
+import { LexicalRenderer } from "./LexicalRenderer";
 
 const BlogDetailPage = () => {
   console.log("BlogDetailPage rendered"); // Debug log
@@ -236,14 +237,7 @@ const BlogDetailPage = () => {
                   Isi Artikel:
                 </h3>
                 {blogData?.content ? (
-                  <div
-                    className="prose prose-lg max-w-none"
-                    dangerouslySetInnerHTML={{ __html: blogData.content }}
-                    style={{
-                      lineHeight: "1.8",
-                      color: "#374151",
-                    }}
-                  />
+                  <LexicalRenderer content={blogData.content} />
                 ) : (
                   <p className="text-gray-500 italic">
                     Konten artikel tidak tersedia

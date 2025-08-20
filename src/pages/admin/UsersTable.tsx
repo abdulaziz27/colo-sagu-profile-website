@@ -46,7 +46,7 @@ export default function UsersTable() {
       { accessorKey: "name", header: "Nama" },
       {
         id: "actions",
-        header: "",
+        header: "Aksi",
         cell: ({ row }) => (
           <div className="flex gap-2">
             <Button

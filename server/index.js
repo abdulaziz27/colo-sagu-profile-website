@@ -49,6 +49,12 @@ app.use(express.static(path.join(process.cwd(), "dist")));
 // Static file serving for gallery images
 app.use("/gallery", express.static(path.join(process.cwd(), "public/gallery")));
 
+// Static file serving for blog images
+app.use(
+  "/blog-images",
+  express.static(path.join(process.cwd(), "public/blog-images"))
+);
+
 // Database connection
 const db = mysql.createPool({
   host: config.database.host,
@@ -71,7 +77,12 @@ const snap = new midtransClient.Snap({
 // Multer setup for gallery uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, path.join(process.cwd(), "public/gallery"));
+    // Tentukan folder tujuan berdasarkan rute
+    let uploadPath = "public/gallery";
+    if (req.originalUrl.includes("/blog-images")) {
+      uploadPath = "public/blog-images";
+    }
+    cb(null, path.join(process.cwd(), uploadPath));
   },
   filename: function (req, file, cb) {
     const ext = path.extname(file.originalname);
@@ -79,7 +90,21 @@ const storage = multer.diskStorage({
     cb(null, name);
   },
 });
-const upload = multer({ storage });
+// Hapus batasan ukuran dan tipe file
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB (batas ukuran file)
+  },
+  fileFilter: (req, file, cb) => {
+    // Terima semua tipe file gambar
+    if (file.mimetype.startsWith("image/")) {
+      cb(null, true);
+    } else {
+      cb(new Error("Hanya file gambar yang diperbolehkan"), false);
+    }
+  },
+});
 
 // Upload endpoint for gallery
 app.post("/api/gallery/upload", upload.single("image"), (req, res) => {
@@ -89,6 +114,24 @@ app.post("/api/gallery/upload", upload.single("image"), (req, res) => {
   const url = "/gallery/" + req.file.filename;
   console.log("[UPLOAD] File saved:", url);
   res.json({ url });
+});
+
+// Upload endpoint for blog images
+app.post("/api/blog-images/upload", upload.single("image"), (req, res) => {
+  console.log("[POST] /api/blog-images/upload", req.file);
+  if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+  // Return relative URL for frontend
+  const url = "/blog-images/" + req.file.filename;
+  console.log("[UPLOAD] Blog image saved:", url);
+  // Tambahkan informasi ukuran file dalam respons
+  const fileSize = req.file.size;
+  const fileType = req.file.mimetype;
+  res.json({
+    url,
+    fileSize,
+    fileType,
+    success: true,
+  });
 });
 
 // Endpoint: Get active donation event
@@ -183,9 +226,14 @@ app.post("/api/donate", async (req, res) => {
 // Endpoint: List donations
 app.get("/api/donations", async (req, res) => {
   console.log("[GET] /api/donations");
-  const [rows] = await db.query(
-    "SELECT * FROM donations ORDER BY created_at DESC"
-  );
+  const [rows] = await db.query(`
+    SELECT 
+      d.*,
+      e.name as event_name
+    FROM donations d
+    LEFT JOIN donation_events e ON d.event_id = e.id
+    ORDER BY d.created_at DESC
+  `);
   res.json(rows);
 });
 
