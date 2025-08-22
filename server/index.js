@@ -6,6 +6,7 @@ import multer from "multer";
 import path from "path";
 import { fileURLToPath } from "url";
 import config from "./config.js";
+import { createUserHandler, updateUserHandler, loginHandler } from "./auth.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,7 +29,7 @@ const corsOptions = {
       "https://colosagu.id",
       "https://www.colosagu.id",
       "http://colosagu.id",
-      "http://www.colosagu.id"
+      "http://www.colosagu.id",
     ];
 
     if (allowedOrigins.indexOf(origin) !== -1) {
@@ -49,7 +50,10 @@ app.use(express.static(path.join(process.cwd(), "dist")));
 // Static file serving for persistent upload directories
 app.use("/gallery", express.static("/srv/data/colosagu/gallery"));
 app.use("/blog-images", express.static("/srv/data/colosagu/blog-images"));
-app.use("/lovable-uploads", express.static("/srv/data/colosagu/lovable-uploads"));
+app.use(
+  "/lovable-uploads",
+  express.static("/srv/data/colosagu/lovable-uploads")
+);
 
 // Database connection
 const db = mysql.createPool({
@@ -92,14 +96,15 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB (batas ukuran file)
+    fileSize: 50 * 1024 * 1024, // 50MB (batas ukuran file)
   },
   fileFilter: (req, file, cb) => {
-    // Terima semua tipe file gambar
-    if (file.mimetype.startsWith("image/")) {
+    // Terima semua tipe file
+    if (true) {
+      // Terima semua tipe file
       cb(null, true);
     } else {
-      cb(new Error("Hanya file gambar yang diperbolehkan"), false);
+      cb(new Error("File tidak valid"), false); // Tidak akan pernah dipanggil karena semua file diterima
     }
   },
 });
@@ -337,46 +342,10 @@ app.get("/api/users", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-app.post("/api/users", async (req, res) => {
-  console.log("[POST] /api/users", req.body);
-  const { email, name, password } = req.body;
-  if (!email || !password)
-    return res.status(400).json({ error: "Email & password required" });
-  try {
-    await db.query(
-      "INSERT INTO users (email, name, password) VALUES (?, ?, ?)",
-      [email, name, password]
-    );
-    console.log("[DB] User created successfully");
-    res.json({ success: true });
-  } catch (err) {
-    console.error("[DB] Error creating user:", err.message);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-app.put("/api/users/:id", async (req, res) => {
-  console.log("[PUT] /api/users/" + req.params.id, req.body);
-  const { email, name, password } = req.body;
-  try {
-    if (password) {
-      await db.query(
-        "UPDATE users SET email=?, name=?, password=? WHERE id=?",
-        [email, name, password, req.params.id]
-      );
-    } else {
-      await db.query("UPDATE users SET email=?, name=? WHERE id=?", [
-        email,
-        name,
-        req.params.id,
-      ]);
-    }
-    console.log("[DB] User updated successfully");
-    res.json({ success: true });
-  } catch (err) {
-    console.error("[DB] Error updating user:", err.message);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+// Create user with password encryption
+app.post("/api/users", (req, res) => createUserHandler(req, res, db));
+// Update user with password encryption
+app.put("/api/users/:id", (req, res) => updateUserHandler(req, res, db));
 app.delete("/api/users/:id", async (req, res) => {
   console.log("[DELETE] /api/users/" + req.params.id);
   try {
@@ -700,6 +669,9 @@ app.delete("/api/blog-posts/:id", async (req, res) => {
 app.get("*", (req, res) => {
   res.sendFile(path.join(process.cwd(), "dist", "index.html"));
 });
+
+// Login endpoint
+app.post("/api/login", (req, res) => loginHandler(req, res, db));
 
 app.listen(PORT, () => {
   console.log(`Backend server running on http://localhost:${PORT}`);

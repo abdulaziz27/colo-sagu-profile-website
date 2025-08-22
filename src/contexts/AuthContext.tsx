@@ -48,13 +48,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      // For now, use dummy login logic
+      // Use API login endpoint
+      const response = await fetch("/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.user) {
+        setUser(data.user);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        return true;
+      }
+
+      // Fallback untuk akun admin lama
       if (email === "admin@colosagu.org" && password === "admin123") {
         const userData = { id: 1, email, name: "Admin" };
         setUser(userData);
         localStorage.setItem("user", JSON.stringify(userData));
         return true;
       }
+
       return false;
     } catch (error) {
       console.error("Login error:", error);

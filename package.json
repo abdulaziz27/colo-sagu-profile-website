@@ -10,10 +10,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "start": "node server/index.js",
-    "start:pm2": "pm2 start ecosystem.config.js",
-    "restart": "pm2 restart colo-sagu-api",
-    "stop": "pm2 stop colo-sagu-api",
-    "logs": "pm2 logs colo-sagu-api"
+    "start:pm2": "pm2 start deployment/ecosystem.config.cjs",
+    "restart": "pm2 restart colosagu-api",
+    "stop": "pm2 stop colosagu-api",
+    "logs": "pm2 logs colosagu-api"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -54,6 +54,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@tanstack/react-query": "^5.56.2",
     "@tanstack/react-table": "^8.21.3",
+    "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
