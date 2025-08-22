@@ -185,6 +185,11 @@ app.post("/api/donate", async (req, res) => {
       customer_details: {
         first_name: name || "Donatur",
       },
+      callbacks: {
+        finish: `https://colosagu.id/donate?status=success&order_id=${orderId}`,
+        unfinish: `https://colosagu.id/donate?status=pending&order_id=${orderId}`,
+        error: `https://colosagu.id/donate?status=error&order_id=${orderId}`,
+      },
     };
 
     let transaction, snapToken;
@@ -205,12 +210,12 @@ app.post("/api/donate", async (req, res) => {
     }
 
     try {
-      // Insert dengan status 'settlement' langsung (berhasil)
+      // Insert dengan status 'pending' - menunggu konfirmasi pembayaran
       await db.query(
         "INSERT INTO donations (order_id, name, amount, status, snap_token, event_id) VALUES (?, ?, ?, ?, ?, ?)",
-        [orderId, name || "Donatur", amount, "settlement", snapToken, event.id]
+        [orderId, name || "Donatur", amount, "pending", snapToken, event.id]
       );
-      console.log("[DB] Donation inserted with status 'settlement'");
+      console.log("[DB] Donation inserted with status 'pending'");
     } catch (err) {
       console.error("[DB] Error inserting donation:", err.message, err);
       return res.status(500).json({
@@ -219,7 +224,7 @@ app.post("/api/donate", async (req, res) => {
       });
     }
 
-    res.json({ snapToken });
+    res.json({ snapToken, orderId });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -661,6 +666,141 @@ app.delete("/api/blog-posts/:id", async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     console.error("[DB] Error deleting blog post:", err.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Endpoint: Check transaction status from Midtrans
+app.post("/api/check-transaction", async (req, res) => {
+  console.log("[POST] /api/check-transaction", req.body);
+  try {
+    const { order_id } = req.body;
+    if (!order_id) return res.status(400).json({ error: "order_id required" });
+
+    // Get transaction status from Midtrans
+    const transaction = await snap.transaction.status(order_id);
+    console.log("[MIDTRANS] Transaction status:", transaction);
+
+    // Update database status based on Midtrans response
+    const transactionStatus = transaction.transaction_status;
+    if (transactionStatus === "settlement") {
+      await db.query("UPDATE donations SET status = ? WHERE order_id = ?", [
+        "settlement",
+        order_id,
+      ]);
+      console.log(`[DB] Order ${order_id} status updated to settlement`);
+    } else if (
+      transactionStatus === "cancel" ||
+      transactionStatus === "deny" ||
+      transactionStatus === "expire"
+    ) {
+      await db.query("UPDATE donations SET status = ? WHERE order_id = ?", [
+        "failed",
+        order_id,
+      ]);
+      console.log(`[DB] Order ${order_id} status updated to failed`);
+    } else {
+      await db.query("UPDATE donations SET status = ? WHERE order_id = ?", [
+        transactionStatus,
+        order_id,
+      ]);
+      console.log(
+        `[DB] Order ${order_id} status updated to ${transactionStatus}`
+      );
+    }
+
+    res.json({
+      status: transactionStatus,
+      message: "Transaction status updated",
+    });
+  } catch (err) {
+    console.error("[CHECK TRANSACTION] Error:", err.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Endpoint: Auto-check transaction status (called from frontend after Snap)
+app.get("/api/donation-status/:order_id", async (req, res) => {
+  console.log("[GET] /api/donation-status/" + req.params.order_id);
+  try {
+    const { order_id } = req.params;
+
+    // First check current status in database
+    const [currentDonation] = await db.query(
+      "SELECT status FROM donations WHERE order_id = ?",
+      [order_id]
+    );
+
+    if (currentDonation.length === 0) {
+      return res.status(404).json({ error: "Donation not found" });
+    }
+
+    const currentStatus = currentDonation[0].status;
+    console.log(`[DB] Current status for ${order_id}: ${currentStatus}`);
+
+    // If still pending, check with Midtrans
+    if (currentStatus === "pending") {
+      try {
+        const transaction = await snap.transaction.status(order_id);
+        const transactionStatus = transaction.transaction_status;
+        console.log(`[MIDTRANS] Status from Midtrans: ${transactionStatus}`);
+
+        // Update database if status changed
+        if (transactionStatus !== currentStatus) {
+          if (transactionStatus === "settlement") {
+            await db.query(
+              "UPDATE donations SET status = ? WHERE order_id = ?",
+              ["settlement", order_id]
+            );
+            console.log(`[DB] Order ${order_id} status updated to settlement`);
+          } else if (
+            transactionStatus === "cancel" ||
+            transactionStatus === "deny" ||
+            transactionStatus === "expire"
+          ) {
+            await db.query(
+              "UPDATE donations SET status = ? WHERE order_id = ?",
+              ["failed", order_id]
+            );
+            console.log(`[DB] Order ${order_id} status updated to failed`);
+          } else {
+            await db.query(
+              "UPDATE donations SET status = ? WHERE order_id = ?",
+              [transactionStatus, order_id]
+            );
+            console.log(
+              `[DB] Order ${order_id} status updated to ${transactionStatus}`
+            );
+          }
+
+          return res.json({
+            status: transactionStatus,
+            updated: true,
+            message: "Status updated from Midtrans",
+          });
+        }
+      } catch (midtransError) {
+        console.error(
+          "[MIDTRANS] Error checking status:",
+          midtransError.message
+        );
+        // Return current status if Midtrans check fails
+        return res.json({
+          status: currentStatus,
+          updated: false,
+          message: "Could not check Midtrans status",
+        });
+      }
+    }
+
+    // Return current status
+    res.json({
+      status: currentStatus,
+      updated: false,
+      message: "Status unchanged",
+    });
+  } catch (err) {
+    console.error("[DONATION STATUS] Error:", err.message);
     res.status(500).json({ error: "Internal server error" });
   }
 });

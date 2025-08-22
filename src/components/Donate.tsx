@@ -194,6 +194,39 @@ const Donate = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const checkTransactionStatus = async (orderId: string) => {
+    try {
+      console.log("Checking transaction status for:", orderId);
+      const response = await axios.get(
+        `${API_ENDPOINTS.DONATE}/../donation-status/${orderId}`
+      );
+      const { status, updated } = response.data;
+
+      console.log("Transaction status check result:", { status, updated });
+
+      if (status === "settlement") {
+        setSuccessMsg("Terima kasih, donasi Anda berhasil!");
+        toast.success("Donasi berhasil!");
+        fetchTotal(); // update total donasi
+      } else if (
+        status === "failed" ||
+        status === "cancel" ||
+        status === "deny" ||
+        status === "expire"
+      ) {
+        toast.error("Pembayaran gagal atau dibatalkan");
+      } else if (status === "pending") {
+        toast.info("Donasi Anda sedang diproses");
+      }
+
+      if (updated) {
+        fetchTotal(); // update total donasi jika ada perubahan status
+      }
+    } catch (error) {
+      console.error("Error checking transaction status:", error);
+    }
+  };
+
   const handleDonate = async (e?: React.MouseEvent) => {
     if (e) e.preventDefault();
     if (isSnapOpen) return; // Cegah Snap dipanggil dua kali
@@ -206,8 +239,9 @@ const Donate = () => {
     }
     try {
       const res = await axios.post(API_ENDPOINTS.DONATE, { name, amount });
-      const snapToken = res.data.snapToken;
+      const { snapToken, orderId } = res.data;
       console.log("Snap token didapat:", snapToken);
+      console.log("Order ID:", orderId);
 
       // @ts-expect-error - Midtrans snap is loaded externally
       if (!window.snap) {
@@ -249,6 +283,8 @@ const Donate = () => {
         onClose: function () {
           setIsSnapOpen(false);
           donateButtonRef.current?.focus();
+          // Check transaction status after Snap closes
+          checkTransactionStatus(orderId);
         },
       });
     } catch (err) {
