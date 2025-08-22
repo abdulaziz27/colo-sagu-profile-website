@@ -7,6 +7,9 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, "../.env") });
 
+// Determine if Midtrans is in production mode
+const isMidtransProduction = process.env.MIDTRANS_IS_PRODUCTION === "true";
+
 export default {
   // Midtrans Configuration
   midtrans: {
@@ -16,7 +19,14 @@ export default {
     clientKey:
       process.env.MIDTRANS_CLIENT_KEY || "SB-Mid-client-yTb4hQknvTM4U0qb",
     merchantId: process.env.MIDTRANS_MERCHANT_ID || "G262060243",
-    isProduction: process.env.NODE_ENV === "production",
+    isProduction: isMidtransProduction,
+    // API host configuration based on environment
+    apiHost: isMidtransProduction
+      ? "https://api.midtrans.com"
+      : "https://api.sandbox.midtrans.com",
+    snapHost: isMidtransProduction
+      ? "https://app.midtrans.com"
+      : "https://app.sandbox.midtrans.com",
   },
 
   // Database Configuration

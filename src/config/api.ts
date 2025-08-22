@@ -35,9 +35,9 @@ export const API_ENDPOINTS = {
 };
 
 // Midtrans Configuration
+// Note: Frontend should use the same environment as backend
+// The client key should match the backend configuration
 export const MIDTRANS_CONFIG = {
-  clientKey: isDevelopment
-    ? "SB-Mid-client-yTb4hQknvTM4U0qb"
-    : "your-production-client-key", // Ganti dengan production key
-  isProduction: isProduction,
+  clientKey: import.meta.env.VITE_MIDTRANS_CLIENT_KEY || "SB-Mid-client-yTb4hQknvTM4U0qb",
+  isProduction: import.meta.env.VITE_MIDTRANS_IS_PRODUCTION === "true",
 };

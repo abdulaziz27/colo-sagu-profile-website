@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { API_ENDPOINTS, MIDTRANS_CONFIG } from "@/config/api";
+import { loadMidtransScript, isMidtransLoaded } from "@/lib/midtrans-loader";
 import axios from "axios";
 import { toast } from "sonner";
 import {
@@ -173,6 +174,18 @@ const Donate = () => {
   };
 
   useEffect(() => {
+    // Pre-load Midtrans script
+    const preloadMidtrans = async () => {
+      if (!isMidtransLoaded()) {
+        try {
+          await loadMidtransScript();
+          console.log("[MIDTRANS] Script pre-loaded successfully");
+        } catch (error) {
+          console.error("[MIDTRANS] Failed to pre-load script:", error);
+        }
+      }
+    };
+
     // Ambil event aktif
     const fetchEvent = async () => {
       setEventLoading(true);
@@ -185,11 +198,13 @@ const Donate = () => {
       }
       setEventLoading(false);
     };
+
     fetchEvent();
     fetchTotal();
     fetchGallery(); // Tambahkan fetch gallery
     fetchVideos(); // Tambahkan fetch videos
     fetchBlog(); // Tambahkan fetch blog
+    preloadMidtrans(); // Pre-load Midtrans script
     const interval = setInterval(fetchTotal, 10000);
     return () => clearInterval(interval);
   }, []);
@@ -235,11 +250,16 @@ const Donate = () => {
       console.log("Snap token didapat:", snapToken);
       console.log("Order ID:", orderId);
 
-      // @ts-expect-error - Midtrans snap is loaded externally
-      if (!window.snap) {
-        toast.error("Midtrans Snap belum ter-load. Coba refresh halaman.");
-        setLoading(false);
-        return;
+      // Load Midtrans script if not already loaded
+      if (!isMidtransLoaded()) {
+        try {
+          await loadMidtransScript();
+        } catch (error) {
+          console.error("Failed to load Midtrans script:", error);
+          toast.error("Gagal memuat Midtrans. Coba refresh halaman.");
+          setLoading(false);
+          return;
+        }
       }
       donateButtonRef.current?.scrollIntoView({
         behavior: "auto",
@@ -247,7 +267,6 @@ const Donate = () => {
       });
       setIsSnapOpen(true);
 
-      // @ts-expect-error - Midtrans snap is loaded externally
       window.snap.pay(snapToken, {
         onSuccess: function (result) {
           console.log("Payment success:", result);
