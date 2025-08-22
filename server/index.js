@@ -192,10 +192,10 @@ app.post("/api/donate", async (req, res) => {
       },
     };
 
-    let transaction, snapToken;
+    let transaction;
     try {
       transaction = await snap.createTransaction(parameter);
-      snapToken = transaction.token;
+      const snapToken = transaction.token;
       console.log("[MIDTRANS] Transaction created successfully:", snapToken);
       console.log(
         "[MIDTRANS] Full transaction response:",
@@ -226,7 +226,7 @@ app.post("/api/donate", async (req, res) => {
           name || "Donatur",
           amount,
           "pending",
-          snapToken,
+          transaction.token,
           event.id,
         ]
       );
@@ -777,15 +777,21 @@ app.get("/api/donation-status/:order_id", async (req, res) => {
       const transaction = await snap.transaction.status(order_id);
       const transactionStatus = transaction.transaction_status;
       console.log(`[MIDTRANS] Status from Midtrans: ${transactionStatus}`);
-      console.log(`[MIDTRANS] Full transaction response:`, JSON.stringify(transaction, null, 2));
+      console.log(
+        `[MIDTRANS] Full transaction response:`,
+        JSON.stringify(transaction, null, 2)
+      );
 
       // Update database if status changed
       if (transactionStatus !== currentStatus) {
-        if (transactionStatus === "settlement" || transactionStatus === "capture") {
-          await db.query(
-            "UPDATE donations SET status = ? WHERE order_id = ?",
-            ["settlement", order_id]
-          );
+        if (
+          transactionStatus === "settlement" ||
+          transactionStatus === "capture"
+        ) {
+          await db.query("UPDATE donations SET status = ? WHERE order_id = ?", [
+            "settlement",
+            order_id,
+          ]);
           console.log(`[DB] Order ${order_id} status updated to settlement`);
         } else if (
           transactionStatus === "cancel" ||
@@ -793,16 +799,16 @@ app.get("/api/donation-status/:order_id", async (req, res) => {
           transactionStatus === "expire" ||
           transactionStatus === "failure"
         ) {
-          await db.query(
-            "UPDATE donations SET status = ? WHERE order_id = ?",
-            ["failed", order_id]
-          );
+          await db.query("UPDATE donations SET status = ? WHERE order_id = ?", [
+            "failed",
+            order_id,
+          ]);
           console.log(`[DB] Order ${order_id} status updated to failed`);
         } else {
-          await db.query(
-            "UPDATE donations SET status = ? WHERE order_id = ?",
-            [transactionStatus, order_id]
-          );
+          await db.query("UPDATE donations SET status = ? WHERE order_id = ?", [
+            transactionStatus,
+            order_id,
+          ]);
           console.log(
             `[DB] Order ${order_id} status updated to ${transactionStatus}`
           );
@@ -821,12 +827,9 @@ app.get("/api/donation-status/:order_id", async (req, res) => {
         });
       }
     } catch (midtransError) {
-      console.error(
-        "[MIDTRANS] Error checking status:",
-        midtransError.message
-      );
+      console.error("[MIDTRANS] Error checking status:", midtransError.message);
       console.error("[MIDTRANS] Error details:", midtransError.response?.data);
-      
+
       // Return current status if Midtrans check fails
       return res.json({
         status: currentStatus,
@@ -840,6 +843,36 @@ app.get("/api/donation-status/:order_id", async (req, res) => {
       status: currentStatus,
       updated: false,
       message: "Status unchanged",
+    });
+  } catch (err) {
+    console.error("[DONATION STATUS] Error:", err.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Endpoint: Simple status check (returns database status only)
+app.get("/api/donation-status/:order_id", async (req, res) => {
+  console.log("[GET] /api/donation-status/" + req.params.order_id);
+  try {
+    const { order_id } = req.params;
+
+    const [currentDonation] = await db.query(
+      "SELECT status FROM donations WHERE order_id = ?",
+      [order_id]
+    );
+
+    if (currentDonation.length === 0) {
+      return res.status(404).json({ error: "Donation not found" });
+    }
+
+    const currentStatus = currentDonation[0].status;
+    console.log(`[DB] Current status for ${order_id}: ${currentStatus}`);
+
+    return res.json({
+      status: currentStatus,
+      updated: false,
+      message:
+        "Status from database - callback will update if payment successful",
     });
   } catch (err) {
     console.error("[DONATION STATUS] Error:", err.message);
