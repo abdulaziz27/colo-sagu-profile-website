@@ -197,6 +197,10 @@ app.post("/api/donate", async (req, res) => {
       transaction = await snap.createTransaction(parameter);
       snapToken = transaction.token;
       console.log("[MIDTRANS] Transaction created successfully:", snapToken);
+      console.log(
+        "[MIDTRANS] Full transaction response:",
+        JSON.stringify(transaction, null, 2)
+      );
     } catch (err) {
       console.error(
         "[MIDTRANS] Error creating transaction:",
@@ -209,11 +213,22 @@ app.post("/api/donate", async (req, res) => {
       });
     }
 
+    // Gunakan order_id dari response Midtrans jika ada, atau order_id kita sendiri
+    const finalOrderId = transaction.order_id || orderId;
+    console.log("[MIDTRANS] Using order_id:", finalOrderId);
+
     try {
       // Insert dengan status 'pending' - menunggu konfirmasi pembayaran
       await db.query(
         "INSERT INTO donations (order_id, name, amount, status, snap_token, event_id) VALUES (?, ?, ?, ?, ?, ?)",
-        [orderId, name || "Donatur", amount, "pending", snapToken, event.id]
+        [
+          finalOrderId,
+          name || "Donatur",
+          amount,
+          "pending",
+          snapToken,
+          event.id,
+        ]
       );
       console.log("[DB] Donation inserted with status 'pending'");
     } catch (err) {
@@ -224,7 +239,7 @@ app.post("/api/donate", async (req, res) => {
       });
     }
 
-    res.json({ snapToken, orderId });
+    res.json({ snapToken, orderId: finalOrderId });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -264,67 +279,86 @@ app.get("/api/total-donations", async (req, res) => {
 // Webhook endpoint (Midtrans callback)
 app.post("/api/midtrans-callback", async (req, res) => {
   console.log("[POST] /api/midtrans-callback", req.body);
+  console.log(
+    "[MIDTRANS CALLBACK] Full request body:",
+    JSON.stringify(req.body, null, 2)
+  );
+
   try {
-    const { order_id, transaction_status } = req.body;
-    if (!order_id) return res.status(400).json({ error: "order_id required" });
+    // Midtrans bisa mengirim data dalam format yang berbeda
+    const { order_id, transaction_status, status_code, transaction_id } =
+      req.body;
+
+    // Coba berbagai kemungkinan field untuk order_id
+    const finalOrderId = order_id || req.body.order_id || req.body.orderId;
+    const finalStatus =
+      transaction_status || req.body.transaction_status || req.body.status;
+
+    if (!finalOrderId) {
+      console.log("[MIDTRANS CALLBACK] No order_id found in request body");
+      return res.status(400).json({ error: "order_id required" });
+    }
 
     console.log(
-      `[MIDTRANS CALLBACK] Order ${order_id} status: ${transaction_status}`
+      `[MIDTRANS CALLBACK] Order ${finalOrderId} status: ${finalStatus}`
     );
 
     // Check current status in database
     const [currentDonation] = await db.query(
       "SELECT status FROM donations WHERE order_id = ?",
-      [order_id]
+      [finalOrderId]
     );
 
     if (currentDonation.length === 0) {
       console.log(
-        `[MIDTRANS CALLBACK] Order ${order_id} not found in database`
+        `[MIDTRANS CALLBACK] Order ${finalOrderId} not found in database`
       );
       return res.status(404).json({ error: "Order not found" });
     }
 
     const currentStatus = currentDonation[0].status;
     console.log(
-      `[MIDTRANS CALLBACK] Current status in DB: ${currentStatus}, Midtrans status: ${transaction_status}`
+      `[MIDTRANS CALLBACK] Current status in DB: ${currentStatus}, Midtrans status: ${finalStatus}`
     );
 
-    // Only update if status is different
-    if (currentStatus !== transaction_status) {
-      if (transaction_status == "settlement") {
-        await db.query("UPDATE donations SET status = ? WHERE order_id = ?", [
-          "settlement",
-          order_id,
-        ]);
-        console.log(
-          `[MIDTRANS CALLBACK] Order ${order_id} status updated to settlement (BERHASIL)`
-        );
-      } else if (
-        transaction_status == "cancel" ||
-        transaction_status == "deny" ||
-        transaction_status == "expire"
-      ) {
-        await db.query("UPDATE donations SET status = ? WHERE order_id = ?", [
-          "failed",
-          order_id,
-        ]);
-        console.log(
-          `[MIDTRANS CALLBACK] Order ${order_id} status updated to failed`
-        );
-      } else {
-        // For other statuses like pending, capture, etc.
-        await db.query("UPDATE donations SET status = ? WHERE order_id = ?", [
-          transaction_status,
-          order_id,
-        ]);
-        console.log(
-          `[MIDTRANS CALLBACK] Order ${order_id} status updated to ${transaction_status}`
-        );
-      }
-    } else {
+    // Update status berdasarkan Midtrans
+    if (finalStatus === "settlement" || finalStatus === "capture") {
+      await db.query("UPDATE donations SET status = ? WHERE order_id = ?", [
+        "settlement",
+        finalOrderId,
+      ]);
       console.log(
-        `[MIDTRANS CALLBACK] Order ${order_id} status unchanged (${currentStatus})`
+        `[MIDTRANS CALLBACK] Order ${finalOrderId} status updated to settlement (BERHASIL)`
+      );
+    } else if (
+      finalStatus === "cancel" ||
+      finalStatus === "deny" ||
+      finalStatus === "expire" ||
+      finalStatus === "failure"
+    ) {
+      await db.query("UPDATE donations SET status = ? WHERE order_id = ?", [
+        "failed",
+        finalOrderId,
+      ]);
+      console.log(
+        `[MIDTRANS CALLBACK] Order ${finalOrderId} status updated to failed`
+      );
+    } else if (finalStatus === "pending") {
+      await db.query("UPDATE donations SET status = ? WHERE order_id = ?", [
+        "pending",
+        finalOrderId,
+      ]);
+      console.log(
+        `[MIDTRANS CALLBACK] Order ${finalOrderId} status updated to pending`
+      );
+    } else {
+      // For other statuses
+      await db.query("UPDATE donations SET status = ? WHERE order_id = ?", [
+        finalStatus,
+        finalOrderId,
+      ]);
+      console.log(
+        `[MIDTRANS CALLBACK] Order ${finalOrderId} status updated to ${finalStatus}`
       );
     }
 
@@ -738,59 +772,67 @@ app.get("/api/donation-status/:order_id", async (req, res) => {
     const currentStatus = currentDonation[0].status;
     console.log(`[DB] Current status for ${order_id}: ${currentStatus}`);
 
-    // If still pending, check with Midtrans
-    if (currentStatus === "pending") {
-      try {
-        const transaction = await snap.transaction.status(order_id);
-        const transactionStatus = transaction.transaction_status;
-        console.log(`[MIDTRANS] Status from Midtrans: ${transactionStatus}`);
+    // Always check with Midtrans for the most up-to-date status
+    try {
+      const transaction = await snap.transaction.status(order_id);
+      const transactionStatus = transaction.transaction_status;
+      console.log(`[MIDTRANS] Status from Midtrans: ${transactionStatus}`);
+      console.log(`[MIDTRANS] Full transaction response:`, JSON.stringify(transaction, null, 2));
 
-        // Update database if status changed
-        if (transactionStatus !== currentStatus) {
-          if (transactionStatus === "settlement") {
-            await db.query(
-              "UPDATE donations SET status = ? WHERE order_id = ?",
-              ["settlement", order_id]
-            );
-            console.log(`[DB] Order ${order_id} status updated to settlement`);
-          } else if (
-            transactionStatus === "cancel" ||
-            transactionStatus === "deny" ||
-            transactionStatus === "expire"
-          ) {
-            await db.query(
-              "UPDATE donations SET status = ? WHERE order_id = ?",
-              ["failed", order_id]
-            );
-            console.log(`[DB] Order ${order_id} status updated to failed`);
-          } else {
-            await db.query(
-              "UPDATE donations SET status = ? WHERE order_id = ?",
-              [transactionStatus, order_id]
-            );
-            console.log(
-              `[DB] Order ${order_id} status updated to ${transactionStatus}`
-            );
-          }
-
-          return res.json({
-            status: transactionStatus,
-            updated: true,
-            message: "Status updated from Midtrans",
-          });
+      // Update database if status changed
+      if (transactionStatus !== currentStatus) {
+        if (transactionStatus === "settlement" || transactionStatus === "capture") {
+          await db.query(
+            "UPDATE donations SET status = ? WHERE order_id = ?",
+            ["settlement", order_id]
+          );
+          console.log(`[DB] Order ${order_id} status updated to settlement`);
+        } else if (
+          transactionStatus === "cancel" ||
+          transactionStatus === "deny" ||
+          transactionStatus === "expire" ||
+          transactionStatus === "failure"
+        ) {
+          await db.query(
+            "UPDATE donations SET status = ? WHERE order_id = ?",
+            ["failed", order_id]
+          );
+          console.log(`[DB] Order ${order_id} status updated to failed`);
+        } else {
+          await db.query(
+            "UPDATE donations SET status = ? WHERE order_id = ?",
+            [transactionStatus, order_id]
+          );
+          console.log(
+            `[DB] Order ${order_id} status updated to ${transactionStatus}`
+          );
         }
-      } catch (midtransError) {
-        console.error(
-          "[MIDTRANS] Error checking status:",
-          midtransError.message
-        );
-        // Return current status if Midtrans check fails
+
+        return res.json({
+          status: transactionStatus,
+          updated: true,
+          message: "Status updated from Midtrans",
+        });
+      } else {
         return res.json({
           status: currentStatus,
           updated: false,
-          message: "Could not check Midtrans status",
+          message: "Status unchanged",
         });
       }
+    } catch (midtransError) {
+      console.error(
+        "[MIDTRANS] Error checking status:",
+        midtransError.message
+      );
+      console.error("[MIDTRANS] Error details:", midtransError.response?.data);
+      
+      // Return current status if Midtrans check fails
+      return res.json({
+        status: currentStatus,
+        updated: false,
+        message: "Could not check Midtrans status",
+      });
     }
 
     // Return current status
