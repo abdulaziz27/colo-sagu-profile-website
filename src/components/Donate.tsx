@@ -194,36 +194,28 @@ const Donate = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const checkTransactionStatus = async (orderId: string) => {
+  const updateTransactionStatus = async (orderId: string, status: string) => {
     try {
-      console.log("Checking transaction status for:", orderId);
-      const response = await axios.get(
-        `${API_ENDPOINTS.DONATE}/../donation-status/${orderId}`
+      console.log(`Updating transaction ${orderId} to status: ${status}`);
+      const response = await axios.post(
+        `${API_ENDPOINTS.DONATE}/../check-transaction`,
+        {
+          order_id: orderId,
+          manual_status: status,
+        }
       );
-      const { status, updated } = response.data;
 
-      console.log("Transaction status check result:", { status, updated });
+      console.log("Transaction status update result:", response.data);
 
       if (status === "settlement") {
-        setSuccessMsg("Terima kasih, donasi Anda berhasil!");
         toast.success("Donasi berhasil!");
-        fetchTotal(); // update total donasi
-      } else if (
-        status === "failed" ||
-        status === "cancel" ||
-        status === "deny" ||
-        status === "expire"
-      ) {
-        toast.error("Pembayaran gagal atau dibatalkan");
-      } else if (status === "pending") {
-        toast.info("Donasi Anda sedang diproses");
+      } else if (status === "failed") {
+        toast.error("Pembayaran gagal");
       }
 
-      if (updated) {
-        fetchTotal(); // update total donasi jika ada perubahan status
-      }
+      fetchTotal(); // update total donasi
     } catch (error) {
-      console.error("Error checking transaction status:", error);
+      console.error("Error updating transaction status:", error);
     }
   };
 
@@ -233,7 +225,7 @@ const Donate = () => {
     setLoading(true);
     const amount = selectedAmount || parseInt(customAmount);
     if (!amount || amount < 10000) {
-      alert("Minimal donasi Rp 10.000");
+      toast.error("Minimal donasi Rp 10.000");
       setLoading(false);
       return;
     }
@@ -245,7 +237,7 @@ const Donate = () => {
 
       // @ts-expect-error - Midtrans snap is loaded externally
       if (!window.snap) {
-        alert("Midtrans Snap belum ter-load. Coba refresh halaman.");
+        toast.error("Midtrans Snap belum ter-load. Coba refresh halaman.");
         setLoading(false);
         return;
       }
@@ -257,40 +249,47 @@ const Donate = () => {
 
       // @ts-expect-error - Midtrans snap is loaded externally
       window.snap.pay(snapToken, {
-        onSuccess: function () {
+        onSuccess: function (result) {
+          console.log("Payment success:", result);
           setIsSnapOpen(false);
           setSuccessMsg("Terima kasih, donasi Anda berhasil!");
           donateButtonRef.current?.scrollIntoView({
             behavior: "smooth",
             block: "center",
           });
-          fetchTotal(); // update total donasi
+          // Update status to settlement and refresh total
+          updateTransactionStatus(orderId, "settlement");
+          fetchTotal();
         },
-        onPending: function () {
+        onPending: function (result) {
+          console.log("Payment pending:", result);
           setIsSnapOpen(false);
           setSuccessMsg("Donasi Anda sedang diproses. Terima kasih!");
           donateButtonRef.current?.scrollIntoView({
             behavior: "smooth",
             block: "center",
           });
-          fetchTotal(); // update total donasi
+          // Keep as pending, will be updated by callback
+          fetchTotal();
         },
         onError: function (result) {
+          console.log("Payment error:", result);
           setIsSnapOpen(false);
-          console.error("Snap error:", result);
-          alert("Pembayaran gagal");
+          // Update status to failed
+          updateTransactionStatus(orderId, "failed");
+          toast.error("Pembayaran gagal");
         },
         onClose: function () {
+          console.log("Snap closed by user");
           setIsSnapOpen(false);
           donateButtonRef.current?.focus();
-          // Check transaction status after Snap closes
-          checkTransactionStatus(orderId);
+          // Status remains pending when user closes without completing payment
         },
       });
     } catch (err) {
       setIsSnapOpen(false);
       console.error("Error axios:", err);
-      alert("Gagal memproses donasi");
+      toast.error("Gagal memproses donasi");
     }
     setLoading(false);
   };
