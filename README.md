@@ -1,104 +1,76 @@
-# Welcome to your Lovable project
+# Colo Sagu Website
 
-## Project info
+Official website for Colo Sagu organization.
 
-**URL**: https://lovable.dev/projects/fcbf3160-9de6-4e0f-bb60-bc104132ecb0
+## Project Structure
 
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/fcbf3160-9de6-4e0f-bb60-bc104132ecb0) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/fcbf3160-9de6-4e0f-bb60-bc104132ecb0) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
-
-## Backend (Express + MySQL + Midtrans)
-
-### Setup
-
-1. Buat file `.env` di root project, isi dengan:
+This project uses a monorepo structure with both frontend (React/Vite) and backend (Express) in the same repository:
 
 ```
-MIDTRANS_SERVER_KEY=SB-Mid-server-Z3-Zp_tYja3x2e6t4BYPq_gw
-MIDTRANS_CLIENT_KEY=SB-Mid-client-yTb4hQknvTM4U0qb
-MIDTRANS_MERCHANT_ID=G262060243
-MYSQL_HOST=localhost
-MYSQL_USER=your_mysql_user
-MYSQL_PASSWORD=your_mysql_password
-MYSQL_DATABASE=your_database_name
+/
+├─ server/             # Backend Express code (PM2)
+├─ dist/               # Frontend build output (Vite)
+├─ src/                # Frontend source code
+├─ public/             # Public assets
+└─ (Other files)       # Configuration files
 ```
 
-2. Jalankan perintah berikut untuk install dependency:
+## Persistent Upload Directories
+
+The application uses these persistent upload directories that should be set up on the VPS:
 
 ```
-npm install
+/srv/data/colosagu/
+├─ gallery/            # Gallery images
+├─ blog-images/        # Blog post images
+└─ lovable-uploads/    # Other uploads
 ```
 
-3. Jalankan project (frontend + backend):
+## Development Setup
 
-```
-npm run dev
+1. Clone the repository
+
+   ```bash
+   git clone https://github.com/your-username/colosagu-website.git
+   cd colosagu-website
+   ```
+
+2. Create a `.env` file based on `env.template`
+
+   ```bash
+   cp env.template .env
+   # Edit .env with your local configuration
+   ```
+
+3. Install dependencies
+
+   ```bash
+   npm install
+   ```
+
+4. Start development servers
+   ```bash
+   npm run dev
+   ```
+
+## Building for Production
+
+```bash
+npm run build
 ```
 
-- Frontend: http://localhost:8080
-- Backend API: http://localhost:3001 (default, bisa diubah di server/index.js)
+## Deployment
+
+See [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) for detailed deployment instructions.
+
+## Scripts
+
+- `npm run dev` - Start both frontend and backend in development mode
+- `npm run dev:client` - Start frontend in development mode
+- `npm run dev:server` - Start backend in development mode
+- `npm run build` - Build frontend for production
+- `npm run start` - Start backend server directly with Node.js
+- `npm run start:pm2` - Start backend server with PM2
+- `npm run restart` - Restart backend server with PM2
+- `npm run stop` - Stop backend server with PM2
+- `npm run logs` - View backend server logs from PM2

@@ -25,10 +25,10 @@ const corsOptions = {
       "http://localhost:3001",
       "http://31.97.187.17",
       "https://31.97.187.17",
-      "https://colosagu.id", // ← Root domain
-      "https://www.colosagu.id", // ← Root domain
-      "http://colosagu.id", // ← Root domain
-      "http://www.colosagu.id", // ← Root domain
+      "https://colosagu.id",
+      "https://www.colosagu.id",
+      "http://colosagu.id",
+      "http://www.colosagu.id"
     ];
 
     if (allowedOrigins.indexOf(origin) !== -1) {
@@ -46,14 +46,10 @@ app.use(express.json());
 // Static file serving for frontend build
 app.use(express.static(path.join(process.cwd(), "dist")));
 
-// Static file serving for gallery images
-app.use("/gallery", express.static(path.join(process.cwd(), "public/gallery")));
-
-// Static file serving for blog images
-app.use(
-  "/blog-images",
-  express.static(path.join(process.cwd(), "public/blog-images"))
-);
+// Static file serving for persistent upload directories
+app.use("/gallery", express.static("/srv/data/colosagu/gallery"));
+app.use("/blog-images", express.static("/srv/data/colosagu/blog-images"));
+app.use("/lovable-uploads", express.static("/srv/data/colosagu/lovable-uploads"));
 
 // Database connection
 const db = mysql.createPool({
@@ -78,11 +74,13 @@ const snap = new midtransClient.Snap({
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     // Tentukan folder tujuan berdasarkan rute
-    let uploadPath = "public/gallery";
+    let uploadPath = "/srv/data/colosagu/gallery";
     if (req.originalUrl.includes("/blog-images")) {
-      uploadPath = "public/blog-images";
+      uploadPath = "/srv/data/colosagu/blog-images";
+    } else if (req.originalUrl.includes("/lovable-uploads")) {
+      uploadPath = "/srv/data/colosagu/lovable-uploads";
     }
-    cb(null, path.join(process.cwd(), uploadPath));
+    cb(null, uploadPath);
   },
   filename: function (req, file, cb) {
     const ext = path.extname(file.originalname);

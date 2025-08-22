@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'colo-sagu-api',
-      script: 'index.js',
+      script: 'server/index.js',
       instances: 1,
       autorestart: true,
       watch: false,
